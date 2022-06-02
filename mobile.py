@@ -106,9 +106,18 @@ if __name__ == '__main__':
         mydb.create_collection(name='phone',
                              validator={"$jsonSchema": {
                                  "bsonType": "object",
-                                 "required": ["name"],
+                                 "required": ["name","email","phone"],
                                  "properties": {
                                      "name": {
+                                         "bsonType": "varchar",
+                                     },
+                                     "email": {
+                                         "bsonType": "varchar",
+                                     },
+                                     "phone": {
+                                         "bsonType": "int",
+                                     },
+                                     "address": {
                                          "bsonType": "varchar",
                                      },
                                      
