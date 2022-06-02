@@ -1,128 +1,73 @@
-from flask import Flask, request, json, Response
-from pymongo import MongoClient
-
+from flask import Flask, request, redirect ,  json, Response
+import pyodbc
 
 app = Flask(__name__)
 
-class phone:
-    def __init__(self, data):
-        self.client = MongoClient("mongodb://localhost:27017/")
-        database = 'sqlserverdevvikramtest'
-        collection = 'phone'
-        cursor = self.client[database]
-        self.collection = cursor[collection]
-        self.data = data
-
-    def insert_data(self, data):
-        new_document = data['document']
-        response = self.collection.insert_one(new_document)
-        output = {'Status': 'Successfully Inserted',
-                  'Document_ID': str(response.inserted_id)}
-        return output
-
-    def read(self):
-        documents = self.collection.find()
-        output = [{item: data[item] for item in data if item != '_id'} for data in documents]
-        return output
-
-    def update_data(self):
-        filter = self.data['condition']
-        updated_data = {"$set": self.data['DataToBeUpdated']}
-        response = self.collection.update_one(filter, updated_data)
-        output = {'Status': 'Successfully Updated' if response.modified_count > 0 else "Nothing was updated."}
-        return output
-
-    def delete_data(self, data):
-        filter = data['condition']
-        response = self.collection.delete_one(filter)
-        output = {'Status': 'Successfully Deleted' if response.deleted_count > 0 else "Document not found."}
-        return output
-
+def connection():
+    server = 'myserver'
+    database = 'sqlserverdevvikramtest'
+    username = 'myusername'
+    password = 'mypassword'
+    connection_str = 'DRIVER={ODBC Driver 17 for SQL Server};SERVER=' + server + ';DATABASE=' + database + ';UID=' + username + ';PWD=' + password
+    conn = pyodbc.connect(connection_str)
+    return conn
 
 @app.route('/mobile', methods=['GET'])
 def read_data():
-    # sample request payload { }
-    data = {}
-    read_obj = phone(data)
-    response = read_obj.read()
-    return Response(response=json.dumps(response), status=200,
+    output = []
+    conn = connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM phone")
+    for row in cursor.fetchall():
+        output.append(row)
+    conn.close()
+    return Response(response=json.dumps(output), status=200,
                     mimetype='application/json')
-
 
 @app.route('/mobile', methods=['POST'])
 def create():
-    # sample request payload { 'document':{ data } }
-    data = request.json
-    if data is None or data == {} or 'document' not in data:
-        return Response(response=json.dumps({"Error": "Please provide connection information"}),
-                        status=400, mimetype='application/json')
-    create_obj = phone(data)
-    response = create_obj.insert_data(data)
-    return Response(response=json.dumps(response), status=200,
-                    mimetype='application/json')
+    if request.method == 'POST':
+        data = request.json
+        conn = connection()
+        cursor = conn.cursor()
+        response = cursor.execute("INSERT INTO phone (name,email,phone,address,age) VALUES ( data['name'],data['email'],data['phone'],data['address'],data['age'])")
+        conn.commit()
+        conn.close()
+        return Response(response=json.dumps(response), status=200,
+                        mimetype='application/json')
 
-@app.route('/mobile', methods=['PUT'])
+@app.route('/mobile', methods = ['PUT'])
 def update():
-    # sample request payload { 'database':'demo', 'collection':'demo', 'condition':{ 'id':1 }, 'DataToBeUpdated':{ data to be updated } }
     data = request.json
-    if data is None or data == {} or 'condition' not in data:
-        return Response(response=json.dumps({"Error": "Please provide connection information"}),
-                        status=400, mimetype='application/json')
-    update_obj = phone(data)
-    response = update_obj.update_data()
-    return Response(response=json.dumps(response), status=200,
-                    mimetype='application/json')
-
-@app.route('/mobile', methods=['PATCH'])
-def update_one():
-    # sample request payload { 'database':'demo', 'collection':'demo', 'condition':{ 'id':1 }, 'DataToBeUpdated':{ data to be updated } }
-    data = request.json
-    if data is None or data == {} or 'condition' not in data:
-        return Response(response=json.dumps({"Error": "Please provide connection information"}),
-                        status=400, mimetype='application/json')
-    update_obj = phone(data)
-    response = update_obj.update_data()
-    return Response(response=json.dumps(response), status=200,
-                    mimetype='application/json')
-
-
-@app.route('/mobile', methods=['DELETE'])
+    cr = []
+    conn = connection()
+    cursor = conn.cursor()
+    if request.method == 'PUT':
+        response = cursor.execute("UPDATE phone SET name = ?,email = ?,phone = ?,address = ?,age = ? WHERE name = ?", data['name'],data['email'],data['phone'],data['address'],data['age'],data['name'],)
+        conn.commit()
+        conn.close()
+        return Response(response=json.dumps(response), status=200,
+                        mimetype='application/json')
+    
+@app.route('/mobile', methods = ['DELETE'])
 def delete():
-    # sample request payload { 'database':'demo', 'collection':'demo', 'condition':{ 'id':1 } }
     data = request.json
-    if data is None or data == {} or 'condition' not in data:
-        return Response(response=json.dumps({"Error": "Please provide connection information"}),
-                        status=400, mimetype='application/json')
-    delete_obj = phone(data)
-    response = delete_obj.delete_data(data)
+    conn = connection()
+    cursor = conn.cursor()
+    response = cursor.execute("DELETE FROM phone WHERE name = ?", data['name'])
+    conn.commit()
+    conn.close()
     return Response(response=json.dumps(response), status=200,
                     mimetype='application/json')
 
-if __name__ == '__main__':
-    myclient = MongoClient("mongodb://localhost:27017/")
-    mydb = myclient["sqlserverdevvikramtest"]
-    collection_list = mydb.list_collection_names()
-    if 'phone' not in collection_list:
-        mydb.create_collection(name='phone',
-                             validator={"$jsonSchema": {
-                                 "bsonType": "object",
-                                 "required": ["name","email","phone"],
-                                 "properties": {
-                                     "name": {
-                                         "bsonType": "varchar",
-                                     },
-                                     "email": {
-                                         "bsonType": "varchar",
-                                     },
-                                     "phone": {
-                                         "bsonType": "int",
-                                     },
-                                     "address": {
-                                         "bsonType": "varchar",
-                                     },
-                                     
-                                 }
-                             }},
-                             validationAction="error",)
-    print('collection list ',mydb.list_collection_names())
+if(__name__ == "__main__"):
+    server = 'myserver'
+    database = 'mydb'
+    username = 'myusername'
+    password = 'mypassword'
+    connection_str = 'DRIVER={ODBC Driver 17 for SQL Server};SERVER=' + server + ';DATABASE=' + database + ';UID=' + username + ';PWD=' + password
+    conn = pyodbc.connect(connection_str)
+    cursor = conn.cursor()
+    cursor.execute(' CREATE TABLE phone ( name varchar(20) PRIMARY KEY NOT NULL,email varchar(50) NOT NULL,phone int(0) NOT NULL,address varchar(0),age int(0))')
+    conn.commit()
     app.run(debug=True, port=5000)
