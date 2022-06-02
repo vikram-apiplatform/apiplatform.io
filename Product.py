@@ -115,7 +115,7 @@ if __name__ == '__main__':
                                          "bsonType": "String",
                                      },
                                      "Product_Price": {
-                                         "bsonType": "Integer",
+                                         "bsonType": "String",
                                      },
                                      
                                  }
