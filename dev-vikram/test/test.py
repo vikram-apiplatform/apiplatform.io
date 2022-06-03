@@ -109,7 +109,7 @@ if __name__ == '__main__':
                                  "required": ["EId","EName","Email","DOJ"],
                                  "properties": {
                                      "EId": {
-                                         "bsonType": "Integer",
+                                         "bsonType": "String",
                                      },
                                      "EName": {
                                          "bsonType": "String",
