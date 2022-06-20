@@ -18,7 +18,7 @@ def create():
     data = request.json
     conn = connection()
     cursor = conn.cursor()
-    response = cursor.execute("select * from products where price < 1000;")
+    response = cursor.execute("select * from bank;")
     conn.commit()
     conn.close()
     return Response(response=json.dumps(response), status=200,
