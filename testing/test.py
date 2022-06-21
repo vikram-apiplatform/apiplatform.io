@@ -115,7 +115,7 @@ if __name__ == '__main__':
                                          "bsonType": "String",
                                      },
                                      "Email": {
-                                         "bsonType": "String",
+                                         "bsonType": "Boolean",
                                      },
                                      "DOJ": {
                                          "bsonType": "String",
