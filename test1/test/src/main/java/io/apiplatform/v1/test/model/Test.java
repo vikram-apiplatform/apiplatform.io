@@ -10,17 +10,17 @@ public class Test {
 
     @Id
     private String id;
-    private Boolean EId;
+    private Object EId;
     private String EName;
     private Boolean Email;
     private String DOJ;
     private Date Time;
     
-    public Boolean getEId() {
+    public Object getEId() {
         return EId;
     }
 
-    public void setEId(Boolean EId) {
+    public void setEId(Object EId) {
         this.EId = EId;
     }
     public String getEName() {
